@@ -1,0 +1,676 @@
+部署
+
+#安装nginx    nginx-1.4.2.tar.gz
+yum -y install gcc* autoconf automake zlib* fiex* libxml* ncurses-devel libmcrypt* libtool-ltdl-devel* make cmake
+yum -y install  openssl-devel pcre-devel 
+ ulimit -SHn 65535
+cd /opt/soft
+tar zxvf nginx-1.4.2.tar.gz
+./configure --prefix=/opt/nginx --with-http_stub_status_module
+make
+make install
+
+启动 nginx
+/opt/nginx/sbin/nginx
+停止 nginx
+/opt/nginx/sbin/nginx -s stop
+重载 nginx
+/opt/nginx/sbin/nginx -s reload
+测试配置文件：/opt/nginx/sbin/nginx -t
+
+
+
+
+#安装mysql
+
+yum list | grep mysql
+yum install -y mysql-server mysql mysql-deve
+#查看版本
+rpm -qi mysql-server
+#启动
+service mysqld start
+#重启
+service mysqld restart
+
+/usr/bin/mysqladmin -u root password 'xue!@#'2．修改MySQL的登录设置： 
+# vi /etc/my.cnf 
+在[mysqld]的段中加上一句：skip-grant-tables 
+例如： 
+[mysqld] 
+datadir=/var/lib/mysql 
+socket=/var/lib/mysql/mysql.sock 
+skip-grant-tables 
+保存并且退出vi。 
+3．重新启动mysqld 
+# /etc/init.d/mysqld restart 
+Stopping MySQL: [ OK ] 
+Starting MySQL: [ OK ] 
+4．登录并修改MySQL的root密码 
+# /usr/bin/mysql 
+Welcome to the MySQL monitor. Commands end with ; or \g. 
+Your MySQL connection id is 3 to server version: 3.23.56 
+Type 'help;' or '\h' for help. Type '\c' to clear the buffer. 
+mysql> USE mysql ; 
+Reading table information for completion of table and column names 
+You can turn off this feature to get a quicker startup with -A 
+Database changed 
+mysql> UPDATE user SET Password = password ( 'new-password' ) WHERE User = 'root' ; 
+Query OK, 0 rows affected (0.00 sec) 
+Rows matched: 2 Changed: 0 Warnings: 0 
+mysql> flush privileges ; 
+Query OK, 0 rows affected (0.01 sec) 
+mysql> quit 
+Bye 
+5．将MySQL的登录设置修改回来 
+# vi /etc/my.cnf 
+将刚才在[mysqld]的段中加上的skip-grant-tables删除 
+保存并且退出vi。 
+6．重新启动mysqld 
+# /etc/init.d/mysqld restart 
+Stopping MySQL: [ OK ] 
+Starting MySQL: [ OK ]
+Work for fun,Live for love!
+
+mysql -uroot -prootE56Sf
+
+
+
+
+#node安装
+
+wget http://nodejs.org/dist/v0.10.28/node-v0.10.28-linux-x64.tar.gz
+wget http://nodejs.org/dist/v0.10.28/node-v0.10.28.tar.gz
+
+tar zxvf node-v0.10.28.tar.gz
+
+cd node-v0.10.28.tar.gz
+
+./configure --prefix=/usr/local/node/0.10.28
+make 
+make install 
+
+3).配置NODE_HOME 
+[root@SNDA-192-168-15-161 node-v0.9.0]# vi /etc/profile 
+在export PATH USER 。。。一行的上面添加如下内容，并将NODE_HOME/bin设置到系统path中 
+#set for nodejs 
+export NODE_HOME=/usr/local/node/0.10.28/
+export PATH=$NODE_HOME/bin:$PATH 
+保存退出后执行如下命令，使刚才的配置生效 
+[root@SNDA-192-168-15-161 node-v0.9.0]# source /etc/profile
+
+执行node -h命令验证设置成功
+
+[root@SNDA-192-168-15-161 ~]# node -h 
+Usage: node [options] [ -e script | script.js ] [arguments] 
+       node debug script.js [arguments]
+
+Options: 
+  -v, --version        print node's version 
+  -e, --eval script    evaluate script 
+  -p, --print          print result of --eval 
+  -i, --interactive    always enter the REPL even if stdin 
+                       does not appear to be a terminal 
+  --no-deprecation     silence deprecation warnings 
+  --trace-deprecation  show stack traces on deprecations 
+  --v8-options         print v8 command line options 
+  --max-stack-size=val set max v8 stack size (bytes)
+
+Environment variables: 
+NODE_PATH              ':'-separated list of directories 
+                       prefixed to the module search path. 
+NODE_MODULE_CONTEXTS   Set to 1 to load modules in their own 
+                       global contexts. 
+NODE_DISABLE_COLORS    Set to 1 to disable colors in the REPL
+
+Documentation can be found at http://nodejs.org/ 
+至此安装设置完毕。
+cd /usr/local/node/0.10.28
+
+
+
+#git安装
+
+方法一：智能安装
+yum install git-all git-gui make gcc ncurses-devel bison byacc flex gawk gettext ccache zlib-devel gtk2-devel lzo-devel pax-utilslibglade2-devel
+方法二：手动安装
+//先安装git依赖的包 
+yum install zlib-devel 
+yum install openssl-devel 
+yum install perl 
+yum install cpio 
+yum install expat-devel 
+yum install gettext-devel 
+
+//安装autoconf 
+yum install autoconf 
+
+#安装git 
+wget http://www.codemonkey.org.uk/projects/git-snapshots/git/git-latest.tar.gz 
+tar xzvf git-latest.tar.gz 
+cd git-{date} 
+autoconf 
+./configure --with-curl=/usr/local 
+make 
+make install
+############################################################
+git介绍以及简单使用
+Git 是一个快速、可扩展的分布式版本控制系统，它具有极为丰富的命令集，对内部系统提供了高级操作和完全访问 . 所谓版本控制系统 (VersionControl System) ，从狭义上来说，它是软件项目开发过程中用于储存我们所写的代码所有修订版本的软件，但事实上我们可以将任何对项目有帮助的文档交付版本控制系统进行管理。
+1.安装git见上面流程
+2.配置git
+# 用 git config --global user.name “tiger”( 输入用户名）
+#git config –global user.email jibo.tiger@gmail.com ( 联系方式）
+3.一个小例子
+#mkdir mygit  //创建文件夹
+#cd mygit
+#git init   //仓库初始化
+#touch hello.c
+//将文件添加到管理系统中
+#git add hello.c( 添加新文件 hello.c) 所生成的快照并存放到一个临时的存储区域， Git 称该区域为索引
+//接下来将文件索引提交到仓库中，使用 git-commit 命令可将索引提交至仓库中，这个过程称为提交，每一次提交都意味着版本在进行一次更新。
+#git commit -m “Version 1.0 hello.c”
+//如有更新再执行添加和提交过程
+//查看当前版本
+#git log
+//查看文件的变化情况
+#git show
+//查看每次版本的大致变化
+#git log --stat --summary
+
+
+
+#SSH 
+#生成公钥和密钥
+ssh-keygen -t rsa -C "fengxuting@qq.com"
+
+git clone git@bitbucket.org:fffy2366/exam.git
+#SSH 参考
+http://blog.csdn.net/hustpzb/article/details/8230454
+https://confluence.atlassian.com/pages/viewpage.action?pageId=270827678
+
+
+
+
+
+#安装node-canvas
+https://github.com/LearnBoost/node-canvas/wiki/Installation---Fedora
+#canvas需要字体支持
+yum search arial
+yum install liberation-sans-fonts.noarch
+
+
+
+
+
+
+在LINUX中我们可以使用这种简单的方式让node.js在后台运行：
+
+nohup node your_app.js &
+forever可以让我们做得更好，并且可以跨平台的在windows和Linux下都能运行。
+
+#forever的安装：
+npm install forever -g
+forever的用法：
+#使用forever启动守护进程：
+forever start your_app.js
+#关闭守护进程：
+forever stop your_app.js
+#重启守护进程：：
+forever restart your_app.js
+#如果需要记录输出日志和错误：
+forever start -l forever.log -o out.log -e err.log your_app.js
+#查看正在运行的程序：
+forever list
+
+
+forever start -a -l forever.log -o out.log -e err.log app.js
+
+
+
+
+
+
+MySQL乱码解决：
+CREATE DATABASE exam DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+mysql -uexam -p exam </opt/www/exam_20140520.sql  --default-character-set=utf8
+
+show variables like "%char%";
+
+[client]
+default-character-set=utf8
+[mysqld_safe]
+default-character-set=utf8
+[mysqld]
+default-character-set=utf8
+[mysql]
+default-character-set=utf8
+2. 重新启动mysql服务，进入sell终端，进入mysql的命令提示符下输入如下指令：
+mysql>show variables like '%char%';
+如果出现的列表各项内容和以下相同表明配置成功了，
++---------------------－+-----－－--------------
+| Variable_name | Value
++-----------------------+-－－------------------
+| character_set_client | utf8
+| character_set_connection | utf8
+| character_set_database | utf8
+| character_set_filesystem | binary
+| character_set_results | utf8
+| character_set_server | utf8
+| character_set_system | utf8
+| character_sets_dir | /usr/share/mysql/charsets/
+
+
+
+
+安装PHP
+
+配置yum源，使用centOS
+ rpm -qa |grep yum
+ 创建/etc/yum.repos.d/CentOS-Base.repo文件，定义yum更新源
+ [root@linux-a ~]# vi /etc/yum.repos.d/CentOS-Base.repo
+[base]
+name=CentOS-5-Base
+#mirrorlist=http://mirrorlist.centos.org/?release=$releasever5&arch=$basearch&repo=os
+#baseurl=http://mirror.centos.org/centos/$releasever/os/$basearch/
+baseurl=http://ftp.sjtu.edu.cn/centos/5/os/$basearch/
+gpgcheck=0
+gpgkey=http://mirror.centos.org/centos/RPM-GPG-KEY-centos5
+#released updates
+[update]
+name=CentOS-5-Updates
+#mirrorlist=http://mirrorlist.centos.org/?release=4&arch=$basearch&repo=updates
+baseurl=http://ftp.sjtu.edu.cn/centos/5/updates/$basearch/
+gpgcheck=0
+gpgkey=http://mirror.centos.org/centos/RPM-GPG-KEY-centos5
+#packages used/produced in the build but not released
+[addons]
+name=CentOS-5-Addons
+#mirrorlist=http://mirrorlist.centos.org/?release=4&arch=$basearch&repo=addons
+baseurl=http://ftp.sjtu.edu.cn/centos/5/addons/$basearch/
+gpgcheck=0
+gpgkey=http://mirror.centos.org/centos/RPM-GPG-KEY-centos5
+#additional packages that may be useful
+[extras]
+name=CentOS-5-Extras
+#mirrorlist=http://mirrorlist.centos.org/?release=4&arch=$basearch&repo=extras
+baseurl=http://ftp.sjtu.edu.cn/centos/5/extras/$basearch/
+gpgcheck=0
+gpgkey=http://mirror.centos.org/centos/RPM-GPG-KEY-centos5
+#additional packages that extend functionality of existing packages
+[centosplus]
+name=CentOS-5-Plus
+#mirrorlist=http://mirrorlist.centos.org/?release=4&arch=$basearch&repo=centosplus
+baseurl=http://ftp.sjtu.edu.cn/centos/5/centosplus/$basearch/
+gpgcheck=0
+enabled=0
+gpgkey=http://mirror.centos.org/centos/RPM-GPG-KEY-centos5
+#contrib - packages by Centos Users
+[contrib]
+name=CentOS-5-Contrib
+#mirrorlist=http://mirrorlist.centos.org/?release=4&arch=$basearch&repo=contrib
+baseurl=http://ftp.sjtu.edu.cn/centos/5/contrib/$basearch/
+gpgcheck=0
+enabled=0
+gpgkey=http://mirror.centos.org/centos/RPM-GPG-KEY-centos5
+# vi dag.repo
+[dag]
+name=Dag RPM Repository for RHEL5
+baseurl=http://ftp.riken.jp/Linux/dag/redhat/el5/en/$basearch/dag/
+enabled=1
+gpgcheck=0
+gpgkey=http://ftp.riken.jp/Linux/dag/packages/RPM-GPG-KEY.dag.txt
+
+导入key
+[root@linux-a ~]# rpm --import http://ftp.sjtu.edu.cn/centos/5/os/i386/RPM-GPG-KEY-CentOS-5
+
+然后使用yum来安装。
+
+安装前修改dns，否则无法解析源。
+http://cn2.php.net/downloads.php
+php-5.4.28.tar.gz
+
+yum -y install  automake autoconf libtool make  gcc gcc-c++ glibc
+yum -y install gd*
+
+yum -y install libmcrypt-devel mhash-devel libxslt-devel  libjpeg libjpeg-devel libpng libpng-devel freetype freetype-devel libxml2 libxml2-devel zlib zlib-devel glibc glibc-devel glib2 glib2-devel bzip2 bzip2-devel ncurses ncurses-devel curl curl-devel e2fsprogs e2fsprogs-devel krb5 krb5-devel libidn libidn-devel openssl openssl-devel mysql-devel
+ 
+wget http://cn2.php.net/distributions/php-5.4.19.tar.gz
+
+tar zvxf php-5.4.19.tar.gz
+cd php-5.4.19
+
+./configure --prefix=/usr/local/php  --enable-zip  --enable-fpm --with-mcrypt --with-zlib --enable-mbstring  --with-curl --disable-debug  --disable-rpath --enable-inline-homeimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --with-mhash --enable-zip --with-pcre-regex --with-mysql --with-mysqli --with-gd --enable-gd-native-ttf  --enable-xml  --enable-bcmath  --enable-shmop  --with-openssl --with-xmlrpc --enable-soap  --enable-opcache --with-pdo-mysql --with-freetype-dir=/usr/lib --with-jpeg-dir=/usr/lib --with-iconv-dir --with-png-dir=/usr/lib  --with-libxml-dir=/usr/lib
+
+ln -s /home/mysql-5.6.13/libmysql/libmysqlclient.so.18 /usr/lib/libmysqlclient.so 
+ln -s /home/mysql-5.6.13/libmysql/libmysqlclient.so.18 /usr/lib64/libmysqlclient.so 
+#如果configure提醒找不到libmysql 做这个操作
+
+make
+make install
+cp /opt/soft/php-5.4.28/php.ini-development /usr/local/php/etc/php.ini
+cp /usr/local/php/etc/php-fpm.conf.default  /usr/local/php/etc/php-fpm.conf
+vim  /usr/local/php/etc/php-fpm.conf
+修改
+user = www
+group = www
+保存退出
+修改nginx.conf 文件
+
+php-fpm - 启动参数及重要配置详解：
+http://www.4wei.cn/archives/1002061
+php-fpm的启动参数
+
+#测试php-fpm配置
+/usr/local/php/sbin/php-fpm -t
+/usr/local/php/sbin/php-fpm -c /usr/local/php/etc/php.ini -y /usr/local/php/etc/php-fpm.conf -t
+ 
+#启动php-fpm
+/usr/local/php/sbin/php-fpm
+/usr/local/php/sbin/php-fpm -c /usr/local/php/etc/php.ini -y /usr/local/php/etc/php-fpm.conf
+ 
+#关闭php-fpm
+kill -INT `cat /usr/local/php/var/run/php-fpm.pid`
+ 
+#重启php-fpm
+kill -USR2 `cat /usr/local/php/var/run/php-fpm.pid`
+#fpm启动
+/usr/local/php/sbin/php-fpm 
+#添加用户
+groupadd www
+useradd -r -g www www
+#fpm 关闭
+killall -9 php-fpm
+
+
+
+#FTP：
+http://www.cnblogs.com/xiongpq/p/3384759.html
+http://forums.techarena.in/tips-tweaks/1462515.htm
+http://www.myhack58.com/Article/sort099/sort0101/2012/33100.htm
+
+yum clean all
+yum clean packages
+yum -y install vsftpd
+
+#安装OpenSSL
+#CentOS6.4配置163的yum源然后yum安装
+http://www.hiceon.com/topic/centos-6-config-163-yum/
+
+#bad bool value in config file for: write_enable 注意你的CentOS FTP服务文件中保证每一行最后没有任何空格,一般出错就是在多余的空格上。
+
+#编译安装没成功
+wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz
+tar zxvf openssl-1.0.1g.tar.gz
+cd openssl-1.0.1g
+./configure
+make
+make install
+
+CentOS 6.4 下安装vsftpd
+
+概述：
+vsftpd是Linux下比较著名的FTP服务器，搭建FTP服务器当然首选这个。
+
+本文介绍了在CentOS 6.4下安装vsftpd、配置虚拟用户登录FTP的过程。
+
+正文：
+一：安装vsftpd
+
+查看是否已经安装vsftpd
+
+rpm -qa | grep vsftpd
+如果没有，就安装，并设置开机启动
+
+yum -y install vsftpd
+chkconfig vsftpd on
+二：基于虚拟用户的配置
+
+所谓虚拟用户就是没有使用真实的帐户，只是通过映射到真实帐户和设置权限的目的。虚拟用户不能登录CentOS系统。
+
+修改配置文件
+
+打开/etc/vsftpd/vsftpd.conf，做如下配置
+
+anonymous_enable=NO //设定不允许匿名访问
+local_enable=YES //设定本地用户可以访问。注：如使用虚拟宿主用户，在该项目设定为NO的情况下所有虚拟用户将无法访问
+chroot_list_enable=YES //使用户不能离开主目录
+ascii_upload_enable=YES
+ascii_download_enable=YES //设定支持ASCII模式的上传和下载功能
+pam_service_name=vsftpd //PAM认证文件名。PAM将根据/etc/pam.d/vsftpd进行认证
+以下这些是关于vsftpd虚拟用户支持的重要配置项，默认vsftpd.conf中不包含这些设定项目，需要自己手动添加
+
+guest_enable=YES //设定启用虚拟用户功能
+guest_username=ftp //指定虚拟用户的宿主用户，CentOS中已经有内置的ftp用户了
+user_config_dir=/etc/vsftpd/vuser_conf //设定虚拟用户个人vsftp的CentOS FTP服务文件存放路径。存放虚拟用户个性的CentOS FTP服务文件(配置文件名=虚拟用户名
+进行认证
+
+首先，安装Berkeley DB工具，很多人找不到db_load的问题就是没有安装这个包。
+
+yum install db4 db4-utils
+然后，创建用户密码文本/etc/vsftpd/vuser_passwd.txt ，注意奇行是用户名，偶行是密码
+
+test
+123456
+接着，生成虚拟用户认证的db文件
+
+db_load -T -t hash -f /etc/vsftpd/vuser_passwd.txt /etc/vsftpd/vuser_passwd.db
+随后，编辑认证文件/etc/pam.d/vsftpd，全部注释掉原来语句，再增加以下两句：
+
+auth required pam_userdb.so db=/etc/vsftpd/vuser_passwd
+account required pam_userdb.so db=/etc/vsftpd/vuser_passwd
+最后，创建虚拟用户配置文件
+
+mkdir /etc/vsftpd/vuser_conf/
+vi /etc/vsftpd/vuser_conf/test  //文件名等于vuser_passwd.txt里面的账户名，否则下面设置无效
+内容如下
+
+local_root=/ftp/www  //虚拟用户根目录,根据实际情况修改
+write_enable=YES  //可写
+anon_umask=022 //掩码
+anon_world_readable_only=NO 
+anon_upload_enable=YES 
+anon_mkdir_write_enable=YES
+anon_other_write_enable=YES
+设置Selinux
+
+setsebool -P ftp_home_dir=1   //设置ftp可以使用home目录
+sersebool -P allow_ftpd_full_access=1   //设置ftp用户可以有所有权限
+设置FTP根目录权限
+
+mkdir /ftp/www   //创建目录
+chmod R 755 /ftp
+chmod R 777 /ftp/www
+最新的vsftpd要求对主目录不能有写的权限所以ftp为755，主目录下面的子目录再设置777权限
+
+设置防火墙
+
+打开/etc/sysconfig/iptables
+
+在“-A INPUT –m state --state NEW –m tcp –p –dport 22 –j ACCEPT”，下添加：
+
+-A INPUT m state --state NEW m tcp p dport 21 j ACCEPT
+然后保存，并关闭该文件，在终端内运行下面的命令，刷新防火墙配置：
+
+service iptables restart
+ 
+
+OK，运行“service vsftpd start”，你就可以访问你的FTP服务器了。
+
+配置PASV模式
+
+vsftpd默认没有开启PASV模式，现在FTP只能通过PORT模式连接，要开启PASV默认需要通过下面的配置
+
+打开/etc/vsftpd/vsftpd.conf，在末尾添加
+
+pasv_enable=YES   //开启PASV模式
+pasv_min_port=40000   //最小端口号
+pasv_max_port=40080   //最大端口号
+pasv_promiscuous=YES
+在防火墙配置内开启40000到40080端口
+
+-A INPUT m state --state NEW m tcp p dport 40000:40080 j ACCEPT
+重启iptabls和vsftpd
+
+service iptables restart
+service vsftpd restart
+现在可以使用PASV模式连接你的FTP服务器了~
+
+
+
+
+#CentOS下搭建Git服务器Gitosis
+http://zwm-xl.blog.sohu.com/170050241.html
+分类：Drupal | 标签： CentOS  git  Gitosis  服务器 
+2011-04-03 08:33 阅读(1946)评论(0)
+1.编译安装git
+1$ wget http://kernel.org/pub/software/scm/git/git-1.7.3.tar.gz #目前最新版本
+2$ tar -xzvf git-1.7.3,tar.gz #解压出来
+3$ cd git-1.7.3 #进入目录
+4$ yum install  -y gettext-devel expat-devel curl-devel zlib-devel openssl-devel #-y是默认自动安装，安装编译时用到的东东
+5$ ./configure --with-curl=/usr/local  #git安装路径
+6$ make && make install #最小化安装的CentOS是没有make的，可以 yum install make 进行安装
+7$ git --version  #查看版本号,确实git是否安装成功
+
+2.安装gitosis
+1$ yum install python python-setuptools
+2$ git clone git://eagain.net/gitosis.git
+3$ cd gitosis
+4$ python setup.py install
+cd /usr/local/src
+
+git clone git://github.com/res0nat0r/gitosis.git
+
+cd gitosis
+
+python setup.py install  
+#显示Finished processing dependencies for gitosis==0.2即表示成功
+
+3.在开发机器上生成公共密钥(用来初始化gitosis)
+1$ ssh-keygen -t rsa #不需要密码,一路回车就行(在本地操作)
+2$ scp ~/.ssh/id_rsa.pub root@xxx:/tmp/ # 上传你的ssh public key到服务器
+
+4.初始化gitosis
+1$ adduser git # 新增一个git用户
+2$ su - git # 切换倒git用户下
+3$ gitosis-init < /tmp/id_rsa.pub # id_rsa.pub是刚刚传过来的
+4$ rm /tmp/id_rsa.pub # id_rsa.pub已经无用，可删除.
+
+5.获取并配置gitosis-admin
+01$  git clone git@xxx:gitosis-admin.git  # 在本地执行，获取gitosis管理项目
+02$  vi gitosis-admin/gitosis.conf  # 编辑gitosis-admin配置文件
+03# 在gitosis.conf底部增加
+04[group 组名]
+05writable = 项目名
+06members = 用户  # 这里的用户名字 要和 keydir下的文件名字相一致
+07# VI下按ZZ（大写）两次会执行自动保存并退出，完成后执行
+08$ git commit -a -m “xxx xx” # 要记住的是，每次添加新文件必须执行git add .，或者git add filename，如果没有新加文件，只是修改的话就可以执行此句。
+09# 修改了文件以后一定要PUSH到服务器，否则不会生效。
+10$ git push
+
+新建项目
+到此步就算完成gitosis的初始化了。接下来的是新建一个新项目到服务器的操作，如第5步中配置gitosis.conf文件添加的是
+01[group project1] # 组名称
+02writable = project1 # 项目名称
+03members = xxx # 用户名xxx为[group gitosis-admin]中的members一样
+04# 记得执行
+05$ git commit -a -m “添加新项目project1，新项目的目录是project1，该项目的成员是xxx“ # “”里的内容自定
+06$ git push
+07# 进入到项目目录
+08$ cd /home/用户/project1 # project1要与gitosis.conf文件配置一致
+09$ git init
+10$ git add . # 新增文件 留意后面有一个点
+11$ git commit -a -m “初始化项目project1″
+12# 然后就到把这个项目放到服务器上去
+13$ git remote add origin git@xxx:project1.git # xxx为服务器地址
+14$ git push origin master
+15# 也可以把上面的两步合成一步
+16$ git push git@xxx:project1.git master
+
+
+
+
+
+#安装DenyHosts 2.6
+1. 安装
+# tar -zxvf DenyHosts-2.6.tar.gz
+# cd DenyHosts-2.6
+# python setup.py install
+默认是安装到/usr/share/denyhosts目录的。
+2. 配置
+# cd /usr/share/denyhosts/
+# cp denyhosts.cfg-dist denyhosts.cfg
+# vi denyhosts.cfg
+根据自己需要进行相应的配置
+SECURE_LOG = /var/log/secure #ssh 日志文件，它是根据这个文件来判断的。 HOSTS_DENY = /etc/hosts.deny #控制用户登陆的文件 PURGE_DENY = 5m #过多久后清除已经禁止的 BLOCK_SERVICE = sshd #禁止的服务名 DENY_THRESHOLD_INVALID = 1 #允许无效用户失败的次数 DENY_THRESHOLD_VALID = 5 #允许普通用户登陆失败的次数 DENY_THRESHOLD_ROOT = 5 #允许root登陆失败的次数 HOSTNAME_LOOKUP=NO #是否做域名反解 ADMIN_EMAIL =  #管理员邮件地址它会给管理员耽邮件 DAEMON_LOG = /var/log/denyhosts #自己的日志文件  
+3. 设置启动脚本
+# cp daemon-control-dist daemon-control
+# chown root daemon-control
+# chmod 700 daemon-control
+完了之后执行daemon-contron start就可以了。
+# ./daemon-control start
+如果要使DenyHosts每次重起后自动启动还需做如下设置：
+# ln -s /usr/share/denyhosts/daemon-control /etc/init.d/denyhosts
+# chkconfig –add denyhosts
+# chkconfig denyhosts on
+然后就可以启动了：
+# service denyhosts start
+可以看看/etc/hosts.deny内是否有禁止的IP，有的话说明已经成功了。
+
+
+
+
+#安装TriAquae
+安装依赖环境 
+yum install gcc gcc-c++ make sysstat nc -y 
+yum install python-devel -y 
+#已经安装MySQL下面两步忽略
+yum install mysql mysql-server mysql-devel -y 
+/etc/init.d/mysqld start 
+
+安装rrdtool 
+yum install rrdtool -y 
+
+升级python为2.75 
+python -V 
+sh install/python_ins.sh 
+说明：5.x系统python默认版本是2.4。安装包中自带升级python 2.7的脚本 
+
+tar zxf TriAquae.tar.gz 
+cd TriAquae/install 
+python setup.py build --prefix=/opt/soft/TriAquae 
+python setup.py install 
+
+create database TriAquae ;
+grant all privileges on TriAquae.* to TriAquae@localhost identified by 'coral';
+
+修改数据库和IP 
+修改tri_config配置文件 
+MySQL_Name = 'TriAquae' 
+MySQL_User = 'root' 
+MySQL_Pass = 'coral' 
+Tri_IP = '192.168.2.2' 
+配置报警接受邮件 
+SMTP_server = 'smtp.126.com' 
+Mail_username = 'alex' 
+Mail_password = 'test123' 
+
+初始化 
+python setup.py init 
+
+启动TriAquae 
+cd /your installdir/TriAquae/sbin 
+python tri_service.py start 
+说明：启动默认为7000端口 
+
+登陆TriAquae 
+http://ip:7000/ 
+默认账户：admin 
+默认密码：triaquae
+
+
+
+#DNS服务器
+yum install bind
+#相关资料
+[1] http://jingyan.baidu.com/article/414eccf60226f16b431f0ad3.html
+[2] http://blog.csdn.net/charlsecharlse/article/details/17955119
