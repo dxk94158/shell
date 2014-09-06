@@ -1,0 +1,540 @@
+部署
+mkdir soft
+wget http://nginx.org/download/nginx-1.6.0.tar.gz
+
+#安装nginx    nginx-1.6.0.tar.gz
+yum -y install gcc* autoconf automake zlib* fiex* libxml* ncurses-devel libmcrypt* libtool-ltdl-devel* make cmake
+yum -y install  openssl-devel pcre-devel 
+ ulimit -SHn 65535
+cd /opt/soft
+tar zxvf nginx-1.6.0.tar.gz
+cd nginx-1.6.0
+./configure --prefix=/opt/nginx --with-http_stub_status_module
+make
+make install
+
+启动 nginx
+/opt/nginx/sbin/nginx
+停止 nginx
+/opt/nginx/sbin/nginx -s stop
+重载 nginx
+/opt/nginx/sbin/nginx -s reload
+测试配置文件：/opt/nginx/sbin/nginx -t
+
+
+vi /opt/nginx/conf/nginx.conf
+
+include vhosts/*.conf;
+=================vhosts/musiconline1.conf=================
+upstream nodejs__upstream {
+        server 127.0.0.1:3000;
+}
+server {
+        listen 80;
+        server_name www.musiconline1.com musiconline1.com;
+        access_log /var/log/nginx/music.log;
+        location / {
+                proxy_set_header   X-Real-IP            $remote_addr;
+                proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+                proxy_set_header   Host                   $http_host;
+                proxy_set_header   X-NginX-Proxy    true;
+                proxy_set_header   Connection "";
+                proxy_http_version 1.1;
+                proxy_pass         http://nodejs__upstream;
+        }
+}
+=====================================
+问题：nginx: [emerg] could not build the server_names_hash, you should increase server_names_hash_bucket_size: 32
+解决：
+在配置文件的http{}段增加一行配置 
+server_names_hash_bucket_size 64; 
+如果64还不够，那么就按32的倍数往上加。
+
+mkdir /var/log/nginx
+
+vim /etc/hosts
+
+#安装mysql
+
+yum list | grep mysql
+yum install -y mysql-server mysql mysql-deve
+#查看版本
+rpm -qi mysql-server
+#启动
+service mysqld start
+#重启
+service mysqld restart
+
+/usr/bin/mysqladmin -u root password *****
+
+
+[root@717ca8bf-0fe3-4a06-a94d-6ebcdf8df1ca ~]# vi /etc/my.cnf 
+
+[client]
+default-character-set=utf8
+
+[mysqld]
+#修改时区
+default-time-zone = '+8:00'
+default-character-set=utf8
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+user=mysql
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links=0
+[mysql]
+default-character-set=utf8
+
+[mysqld_safe]
+default-character-set=utf8
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+
+
+#node安装
+
+wget http://nodejs.org/dist/v0.10.28/node-v0.10.28-linux-x64.tar.gz
+wget http://nodejs.org/dist/v0.10.28/node-v0.10.28.tar.gz
+
+tar zxvf node-v0.10.28.tar.gz
+
+cd node-v0.10.28
+
+./configure --prefix=/usr/local/node/0.10.28
+make 
+make install 
+
+3).配置NODE_HOME 
+[root@SNDA-192-168-15-161 node-v0.9.0]# vi /etc/profile 
+在export PATH USER 。。。一行的上面添加如下内容，并将NODE_HOME/bin设置到系统path中 
+#set for nodejs 
+export NODE_HOME=/usr/local/node/0.10.28/
+export PATH=$NODE_HOME/bin:$PATH 
+保存退出后执行如下命令，使刚才的配置生效 
+[root@SNDA-192-168-15-161 node-v0.9.0]# source /etc/profile
+
+执行node -h命令验证设置成功
+
+[root@SNDA-192-168-15-161 ~]# node -h 
+Usage: node [options] [ -e script | script.js ] [arguments] 
+       node debug script.js [arguments]
+
+Options: 
+  -v, --version        print node's version 
+  -e, --eval script    evaluate script 
+  -p, --print          print result of --eval 
+  -i, --interactive    always enter the REPL even if stdin 
+                       does not appear to be a terminal 
+  --no-deprecation     silence deprecation warnings 
+  --trace-deprecation  show stack traces on deprecations 
+  --v8-options         print v8 command line options 
+  --max-stack-size=val set max v8 stack size (bytes)
+
+Environment variables: 
+NODE_PATH              ':'-separated list of directories 
+                       prefixed to the module search path. 
+NODE_MODULE_CONTEXTS   Set to 1 to load modules in their own 
+                       global contexts. 
+NODE_DISABLE_COLORS    Set to 1 to disable colors in the REPL
+
+Documentation can be found at http://nodejs.org/ 
+至此安装设置完毕。
+cd /usr/local/node/0.10.28
+
+
+
+#git安装
+
+方法一：智能安装
+yum install git-all git-gui make gcc ncurses-devel bison byacc flex gawk gettext ccache zlib-devel gtk2-devel lzo-devel pax-utilslibglade2-devel
+yum install git
+
+
+//安装autoconf 
+yum install autoconf 
+
+git config --global user.name "music"
+git config --global user.email fengxuting@gmail.com
+
+
+git介绍以及简单使用
+Git 是一个快速、可扩展的分布式版本控制系统，它具有极为丰富的命令集，对内部系统提供了高级操作和完全访问 . 所谓版本控制系统 (VersionControl System) ，从狭义上来说，它是软件项目开发过程中用于储存我们所写的代码所有修订版本的软件，但事实上我们可以将任何对项目有帮助的文档交付版本控制系统进行管理。
+1.安装git见上面流程
+2.配置git
+# 用 git config --global user.name “tiger”( 输入用户名）
+#git config –global user.email jibo.tiger@gmail.com ( 联系方式）
+3.一个小例子
+#mkdir mygit  //创建文件夹
+#cd mygit
+#git init   //仓库初始化
+#touch hello.c
+//将文件添加到管理系统中
+#git add hello.c( 添加新文件 hello.c) 所生成的快照并存放到一个临时的存储区域， Git 称该区域为索引
+//接下来将文件索引提交到仓库中，使用 git-commit 命令可将索引提交至仓库中，这个过程称为提交，每一次提交都意味着版本在进行一次更新。
+#git commit -m “Version 1.0 hello.c”
+//如有更新再执行添加和提交过程
+//查看当前版本
+#git log
+//查看文件的变化情况
+#git show
+//查看每次版本的大致变化
+#git log --stat --summary
+
+
+
+#SSH 
+#生成公钥和密钥
+ssh-keygen -t rsa -C "fengxuting@qq.com"
+
+git clone git@bitbucket.org:fffy2366/exam.git
+
+https://bitbucket.org/
+fffy2366
+2*****8
+
+cd 
+#SSH 参考
+http://blog.csdn.net/hustpzb/article/details/8230454
+https://confluence.atlassian.com/pages/viewpage.action?pageId=270827678
+
+
+
+
+
+#安装node-canvas
+https://github.com/LearnBoost/node-canvas/wiki/Installation---Fedora
+yum install cairo cairo-devel cairomm-devel libjpeg-turbo-devel pango pango-devel pangomm pangomm-devel giflib-devel
+npm install
+#canvas需要字体支持
+yum search arial
+yum install liberation-sans-fonts.noarch
+
+
+
+
+
+
+在LINUX中我们可以使用这种简单的方式让node.js在后台运行：
+
+nohup node your_app.js &
+forever可以让我们做得更好，并且可以跨平台的在windows和Linux下都能运行。
+
+#forever的安装：
+npm install forever -g
+forever的用法：
+#使用forever启动守护进程：
+forever start your_app.js
+#关闭守护进程：
+forever stop your_app.js
+#重启守护进程：：
+forever restart your_app.js
+#如果需要记录输出日志和错误：
+forever start -l forever.log -o out.log -e err.log your_app.js
+#查看正在运行的程序：
+forever list
+
+
+forever start -a -l forever.log -o out.log -e err.log app.js
+
+
+
+
+
+
+MySQL乱码解决：
+CREATE DATABASE exam DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+mysql -uexam -p exam </opt/www/exam_20140520.sql  --default-character-set=utf8
+
+show variables like "%char%";
+vi /etc/my.conf
+
+[client]
+default-character-set=utf8
+[mysqld_safe]
+default-character-set=utf8
+[mysqld]
+default-character-set=utf8
+[mysql]
+default-character-set=utf8
+2. 重新启动mysql服务，进入sell终端，进入mysql的命令提示符下输入如下指令：
+mysql>show variables like '%char%';
+如果出现的列表各项内容和以下相同表明配置成功了，
++---------------------－+-----－－--------------
+| Variable_name | Value
++-----------------------+-－－------------------
+| character_set_client | utf8
+| character_set_connection | utf8
+| character_set_database | utf8
+| character_set_filesystem | binary
+| character_set_results | utf8
+| character_set_server | utf8
+| character_set_system | utf8
+| character_sets_dir | /usr/share/mysql/charsets/
+
+
+
+
+
+mysqldump -uexam -p exam >/backup/exam/exam.20140703.sql
+
+tar -zcvf uploads.tar.gz uploads
+
+scp -i uploads.tar.gz 117.121.24.90:/opt/www/exam/public/
+
+
+
+UI:http://www.bj12fen.com:88/test.html
+
+
+# cat backup.sh 
+#!/bin/sh
+cd /backups/exam
+UploadBakName=exam_upload_$(date +%y%m%d).tar.gz
+tar zcvf $UploadBakName /opt/www/exam/public/uploads
+SqlBakName=exam_sql_$(date +%y%m%d).tar.gz
+/usr/bin/mysqldump -uexam -pexam2014 exam>backup.sql
+tar zcvf $SqlBakName backup.sql
+rm -f backup.sql
+find . -name "*.tar.gz"  -ctime +7 | xargs rm
+
+#crontab -e
+40 19 * * *  /backups/exam/backup.sh >> /tmp/exam_backup.log 2>&1
+
+
+
+
+告别node-forever,拥抱PM2
+
+告别node-forever,拥抱PM2
+By Damon Zhao 6月 27 2013 更新日期:2月 5 2014
+文章目录
+1. PM2到底是什么个东西呢?
+2. 原生的集群化支持
+3. 按照termcaps-HTOP(Linux下的系统监控与进程管理软件)的方式管理
+4. 实时集中log处理
+5. 快速恢复
+6. 强健的API
+7. 对了,还有很多特性…
+ 下一步计划?
+原文地址:Goodbye node-forever,hello PM2
+
+pm2-logo
+
+devo.ps团队对JavaScript的迷恋已经不是什么秘密了;node.js作为服务器端,AngularJS作为客户端,某种程度上说,我们的堆栈是用它建成的.我们构建静态客户端和RESTful JSON API的方法意味着我们跑了很多的node.js,我必须承认尽管node.js的一切都令人敬畏,但当我们在生产环境中运行它时它仍然会让我们感到头疼.相比一些更加成熟的语言,它的工具和最佳实践仍然缺乏(试想一下:监控,日志,错误处理).
+
+到目前为止,我们仍然依赖漂亮俏皮的node-forever模块.它是非常伟大的模块,不过依然缺失一些功能:
+
+有限的监控和日志功能
+进程管理配置的支持差
+不支持集群
+代码库老化(意味着在升级node.js时频繁的失败)
+这就是为什么我们要在过去的几个月里去写PM2模块.在我们即将发布针对生产环境的正式版之前我们想先让您看一眼.
+
+PM2到底是什么个东西呢?
+
+首先第一件事,你需要先通过npm来安装它:
+
+npm install -g pm2
+让我们通过表格来对比下:
+
+
+
+Feature	Forever	PM2
+Keep Alive	✔	✔
+Coffeescript	✔	 
+Log aggregation	 	✔
+API	 	✔
+Terminal monitoring	 	✔
+Clustering	 	✔
+JSON configuration	 	✔
+现在让我来介绍一点点主要特性…
+
+原生的集群化支持
+
+Node v0.6引入了集群特性,允许你在多个Node应用中共享socket.问题在于,它不能在容器外运行而且需要一些额外的配置来处理主进程和子进程.
+
+PM2原生支持处理这个问题,而且不需要额外的代码:PM2本身作为主进程,然后它将你的代码封装到一个特殊的集群进程里,就像node.js一样,为你的代码文件添加一些全局变量.
+
+想要启动一个使用所有CPU核心的集群,你只需要键入如下的指令:
+
+$ pm2 start app.js -i max
+然后:
+
+$ pm2 list
+然后就会显示类似下面的东西(ASCII UI FTW);
+
+pm2-list
+
+就像你看到的,现在你的应用有多少个进程就取决于你的CPU核心数了
+
+按照termcaps-HTOP(Linux下的系统监控与进程管理软件)的方式管理
+
+通过pm2 list命令来观察所有运行的进程以及它们的状态已经足够好了.但是怎么来追踪它们的资源消耗呢?别担心,用这个命令:
+
+$ pm2 monit
+你可以得到进程(以及集群)的CPU的使用率和内存占用.
+
+pm2-monit
+
+声明:node-usage到目前为止还不支持MacOS(随便什么性能要求),不过它在Linux下运行良好.
+
+现在,让我们来核实一下我们的集群,还有对内存堆栈的垃圾回收,我们假设你已经有一个HTTP基准测试工具(如果没有,你一定要使用WRK):
+
+1
+2
+3
+4
+5
+    $ express bufallo    //Create an express app
+    $ cd bufallo
+    $ npm install
+    $ pm2 start app.js -i max
+    $ wrk -c 100 -d 100 http://localhost:3000/
+在另一个终端,运行监控选项:
+
+$ pm2 monit
+耶~
+
+实时集中log处理
+
+现在你不得不管理多个集群进程:一个爬取数据,一个处理数据,等等…这就意味着大量log,你可以按照老式的方法处理:
+
+$ tail -f /path/to/log1 /path/to/log2 ...
+但我们想的很周到,我们增加了logs功能:
+
+$ pm2 logs
+pm2-logs
+
+快速恢复
+
+现在事情一切顺利,你的进程嗡嗡的运行着,你需要做一次硬重启(hard restart).现在吗?是的,首先,dump掉:
+
+$ pm2 dump
+然后,你可以从文件中恢复它:
+
+$ pm2 kill      //让我们假设一个PM2停掉了
+$ pm2 resurect  //我所有的进程又满血满状态复活了
+强健的API
+
+比方说,你想要监控所有被PM2管理的进程,而且同时还想监控运行这些进程的机器的状态(甚至希望创建一个Angular应用来调用这些API…):
+
+$ pm2 web
+打开浏览器输入http://localhost:9615 ,我嘞个去!
+
+对了,还有很多特性…
+
+全部测试通过,
+新一代的update-rc.d(pm2 startup),当然它还是alpha版,
+开发模式下更改文件自动重启(pm2 dev),也同样还是草稿,
+自动刷新log,
+快捷的通过JSON文件管理你的应用,
+在error log里记录未捕获的异常,
+记录重启的次数和时间,
+退出时自动杀死进程.
+下一步计划?
+首先,你可以去Github上粉我们(我们喜欢stars).
+
+我们开发的PM2提供了先进完整的Node进程管理解决方案.我们希望能有更多的人来帮助我们:更多的pull requests.一些还停留在开发路线图上面的功能我们会尽快完成,下面这些就是:
+
+远程管理/状态校验,
+嵌入式跨进程通信通道(消息总线),
+V8垃圾回收的内存泄漏检查,
+Web界面,
+监控数据持久化,
+邮件通知.
+特别感谢Makara Wang的观点和工具,还有Alex Kocharin提的建议和提交的代码.
+
+在Twitter上给我们反馈吧.
+欢迎在Hacker News上和我们一起谈论
+本博客基于hexo搭建,推荐一个不错的主题Pacman,虽然我还没用上,不过可以去@A-limon的主页查看效果.
+
+最后感谢@A-limon同学提供翻译建议和审读.
+
+======================================================================================================================
+CentOS如何用sendmail发送邮件  
+
+2013-10-07 21:52:19|  分类： Linux |举报|字号 订阅
+CentOS是一个非常不错的免费开源Linux系统，许多站点首选的平台。然而CentOS默认不能发送邮件，需要发送邮件的童鞋可以安装一个sendmail程序。
+ 
+安装sendmail
+执行：
+1
+[root@vps478753 ~]# yum -y install sendmail
+程序会自动搜索出sendmail安装程序自动安装。
+安装好sendmail以后执行以下命令启动sendmail
+1
+2
+3
+[root@vps478753 ~]# service sendmail start
+Starting sendmail:                                         [  OK  ]
+Starting sm-client:                                        [  OK  ]
+ 
+启动以后我们可以执行mail命令测试一下是否能发送邮件
+一、通过文件内容发送邮件
+首先创建一个body.txt
+1
+[root@vps478753 ~]# touch body.txt
+写入内容
+1
+[root@vps478753 ~]# echo 'This is test mail'>body.txt
+发送邮件
+1
+[root@vps478753 ~]# mail -s 'Test mail' mail@lizhong.me < body.txt
+不一会就收到邮件了
+CentOS安装mail命令
+点击打开，正文内容就是body.txt的内容
+ 
+This is test mail
+ 
+二、使用管道符直接发送邮件内容
+如果不想通过文件发送邮件内容也可以这么发送
+1
+[root@vps478753 ~]# echo "This is test mail" | mail -s 'Test mail' mail@lizhong.me
+以上效果同文件发送邮件内容一样
+ 
+如果提示mail: command not found
+1
+2
+[root@vps478753 ~]# mail -s 'Test mail' mail@lizhong.me < body.txt 
+-bash: mail: command not found
+那么就是没有安装mail命令，此时需要安装mail命令
+1
+[root@vps478753 ~]# yum install mailx -y
+然后再重新发送以下邮件就好了！
+
+出自：http://zdm2008.blog.163.com/blog/static/2049154520139795219380/
+==============================================================================================
+entOS配置sendmail发送邮件，发件人如何不显示通过XXX代发
+2013年04月21日 ⁄ VPS ⁄ 共 548字	⁄ 暂无评论 ⁄ 被围观 2,235+
+自己在VPS上搭建的sendmail邮件服务，发送邮件后在收件人邮箱会显示“通过xxxx代发”，这个看起来很不爽，经过半天的摸索，终于弄好了发送邮件的问题。
+
+①修改主机名，比如你的域名是aaa.com，主机名可以改为www.aaa.com
+
+hostname www.aaa.com；该句即可生效，重启失效
+
+vi /etc/sysconfig/network编辑文件，修改HOSTNAME的值；此方法重启后依然有效
+
+②修改sendmail的域名配置
+
+vi /etc/mail/local-host-names编辑文件，加入你的域名，一行一个；如aaa.com
+
+③修改dns，vps默认的dns服务器可能有些问题，我的就是不能解析qq.com，导致邮件发布出去
+
+vi /etc/resolv.conf；修改为google的dns服务器
+
+nameserver 8.8.8.8
+
+nameserver 8.8.4.4
+
+经过上面三步后，重启network服务
+
+service network restart
+
+好了，发送邮件试试,content.txt是包含邮件内容的文本文件
+
+mail -s "test" xxxxx@qq.com < content.txt
+
+qq邮箱立马收到邮件了，且发件人是显示的xxx@aaa.com，终于没有“通过xx转发”这个东西了。
+
+本文地址:http://www.yunlipiao.com/41.html,出自云里飘博客,转载请保留链接
