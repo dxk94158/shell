@@ -68,7 +68,7 @@
 #####################################################################
 # YOU MUST KEYIN SOME PARAMETERS HERE!!
 # 底下的资料是您必须要填写的！
-email="root@localhost"                # 这是要将 logfile 寄给谁的 e-mail
+email="fengxuting@qq.com"                # 这是要将 logfile 寄给谁的 e-mail
                                 # 你也可以将这些资料寄给许多邮件地址，
                                 # 可以使用底下的格式：
                                 # email="root@localhost,yourID@hostname"
@@ -90,7 +90,9 @@ outputall="no"                # 这个是『是否要将所有的登录档内容
 #####################################################################
 # 0. 设定一些基本的变数内容与检验 basedir 是否存在
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
-LANG=en
+#LANG=en
+#解决邮件中文标题乱码？
+LANG=C 
 LC_TIME=en
 export PATH LANG LC_TIME
 localhostname=`hostname`
@@ -156,20 +158,20 @@ else
 fi
 y="`cat $basedir/dattime`"
 
-# 0.1.0 侦测 syslog.conf 这个档案是否存在
-if [ ! -f "/etc/syslog.conf" ]; then
-        echo -e "                重要！您的 /etc/syslog.conf 并不存在，\n\
-                所以这支 script $0 找不到登录档的资讯，请先确定 /etc/syslog.conf 存在\n\
-                如果确定系统存在 syslog.conf ，不过目录并不在 /etc 底下\n\
+# 0.1.0 侦测 rsyslog.conf 这个档案是否存在
+if [ ! -f "/etc/rsyslog.conf" ]; then
+        echo -e "                重要！您的 /etc/rsyslog.conf 并不存在，\n\
+                所以这支 script $0 找不到登录档的资讯，请先确定 /etc/rsyslog.conf 存在\n\
+                如果确定系统存在 rsyslog.conf ，不过目录并不在 /etc 底下\n\
                 可以使用连结的方式来连结到 /etc/ 底下：\n\n\
-                ln -s /full/path/syslog.conf /etc/syslog.conf \n\n\
+                ln -s /full/path/rsyslog.conf /etc/rsyslog.conf \n\n\
                 错误回报请到 http://linux.vbird.org 查看资讯！" |\
                 mail -s "重要讯息回应" $email
         exit 1
 fi
 
 # 0.1.1 secure file
-log=`grep 'authpriv\.\*' /etc/syslog.conf | awk '{print $2}'| \
+log=`grep 'authpriv\.\*' /etc/rsyslog.conf | awk '{print $2}'| \
         head -n 1|tr -d '-'`
 if [ "$log" == "" ]; then
         echo "Sorry, You do not have the login logfile.... Stop $0" |\
@@ -179,10 +181,10 @@ fi
 cat $log | grep "$y" > "$basedir/securelog"
 
 # 0.1.2 maillog file
-log=`grep 'mail\.\*' /etc/syslog.conf | awk '{print $2}'| \
+log=`grep 'mail\.\*' /etc/rsyslog.conf | awk '{print $2}'| \
         head -n 1|tr -d '-'`
 if [ "$log" == "" ]; then
-        log=`grep 'mail\.' /etc/syslog.conf | awk '{print $2}'| \
+        log=`grep 'mail\.' /etc/rsyslog.conf | awk '{print $2}'| \
         tr -d '-'|grep -v 'message'`
 fi
 if [ "$log" == "" ]; then
@@ -264,7 +266,7 @@ echo " "                                                >> $logfile
 
 #####################################################################
 # 2 SSH 的登录资料的功能函数 (Function) 这其中包含 su 指令！
-funcssh () {
+funcssh(){
         echo " "                                                                >> $logfile
         echo "================= SSH 的登录档资讯汇整 ======================="        >> $logfile
         sshright=`cat $basedir/securelog |grep 'sshd.*Accept' | wc -l | \
