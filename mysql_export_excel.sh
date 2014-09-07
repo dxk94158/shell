@@ -3,8 +3,8 @@
 # author:frank
 # date:2014-09-08
 
-user=mbtiretool
-pass=e4fdf8ebba
+user=root
+pass=1234
 db=mbtiretool
 table=fitment
 dir=/backup/mbtiretool/
