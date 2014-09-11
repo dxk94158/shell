@@ -1,0 +1,9 @@
+#!/usr/bin/expect
+#expect -c "
+set timeout 1200;
+spawn git pull
+expect {
+"*yes/no*" { send "yes\r"; exp_continue}
+"*password*" { send "U!D%2cu>W$UJM_(" }   
+}
+expect eof;"
