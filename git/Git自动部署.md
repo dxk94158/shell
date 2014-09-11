@@ -73,7 +73,7 @@ set timeout 1200;
 #expect "*password for wechat*"  {send "U!D%2cu>W\$UJM_\(\r"}
 spawn  git pull
 #expect "*yes/no*" { send "yes\r"; exp_continue} 
-expect "*wechat@210.14.71.153's password*"  {send "U!D%2cu>W\$UJM_\(\r"}
+expect "*wechat@210.14.71.1's password*"  {send "U!%cu>W\$UJM_\(\r"}
 expect eof;
 
 
