@@ -1,0 +1,46 @@
+git remote add publish root@192.168.60.62:/opt/www/liuwantest
+
+
+
+ssh git@192.168.60.62 echo \$PATH
+
+
+
+git clone --upload-pack "/opt/git/bin/git-upload-pack" git@192.168.60.62:/opt/www/liuwantest/test.git
+
+
+ln -s /opt/git/bin/git-upload-pack /usr/bin/git-upload-pack
+
+ln -s /opt/git/bin/git-receive-pack /usr/bin/git-receive-pack
+
+
+
+
+git clone  git@192.168.60.62:/opt/www/liuwantest/test.git
+
+
+#本机hooks eg.
+cd /opt/www/liuwanwebroot/
+git clone  /opt/www/liuwantest/test.git
+
+cd /
+
+
+http://navyaijm.blog.51cto.com/4647068/816618
+普通用户如何设置SSH无密码访问
+生成密钥及授权文件一般过程：
+假设客户机名sy1,IP为ip1.用户名user；服务器名sy2.IP为ip2.用户名user
+在sy1上输入：
+ssh-keygen -t rsa
+然后弹出一些问题，一路回车。然后输入：
+scp ~/.ssh/id_rsa.pub user@ip2:/home/user/.ssh/ip2
+输入sy2上user的密码，拷贝完成。
+在sy2上，输入：cat ~/.ssh/ip2 >> ~/.ssh/authorized_keys
+（以上步骤也可用ssh-copy-id命令：ssh-copy-id user@ip2 ,不过少了一个授权文件的备份ip2）在ubuntu10.04里，相关文件和目录的权限都不需要改。但是会有另外一个问题就是sy2返回Agent admitted failure to sign using the key错误，简单处理方法就是在sy1上执行两个命令：ssh-agent  ssh-add id_rsa 然后sy1就可以实现无密码登录了。要实现相互无密码访问，要在sy2上按照相应步骤执行。
+ 
+对于普通用户authorized_keys的权限必须限定为600（go-rwx），否则普通用户无法实现无密钥访问，而ROOT用户按照默认即可实现无密钥访问
+chmod go-rwx ~/.ssh/authorized_keys
+不能无字码访问多半是权限问题：
+.ssh目录的权限和authorized_keys的权限都要看， 权限大了是不行的
+.ssh的权限700， authorized_keys的权限600，就够了，属主要是登陆用户自己（root是不行的），组无所谓
+不管是什么原因，查/var/log/secure就明白了

@@ -1,0 +1,455 @@
+
+
+vi /etc/mha/masterha_default.cnf
+masterha_check_ssh --conf=/etc/mha/app1.cnf
+
+
+mysql MHA搭建和切换测试
+
+一、mysql MHA介绍和测试环境
+参考http://code.google.com/p/mysql-master-ha/wiki/Installation#Installing_MHA_Node
+服务器环境：
+192.168.133.108/109/241/242
+192.168.133.242 计划安装MHA manager mysql 5.1
+192.168.133.108/109/241 MHA Node mysql 5.5
+二、安装MHA Node
+需要在所有服务器上安装NODE：192.168.133.108/109/241/242
+1）在个Node上安装perl-DBI以及兼容性libmysqlclient.so共享对象库以及perl-DBD依赖包
+[root@cs-ora perl-rpm]# rpm -ivh perl-DBD-MySQL-4.014-1.el5.rfx.x86_64.rpm
+warning: perl-DBD-MySQL-4.014-1.el5.rfx.x86_64.rpm: Header V3 DSA signature: NOKEY, key ID 6b8d79e6
+error: Failed dependencies:
+        libmysqlclient.so.15()(64bit) is needed by perl-DBD-MySQL-4.014-1.el5.rfx.x86_64
+        libmysqlclient.so.15(libmysqlclient_15)(64bit) is needed by perl-DBD-MySQL-4.014-1.el5.rfx.x86_64
+        perl(DBI) is needed by perl-DBD-MySQL-4.014-1.el5.rfx.x86_64
+        perl(DBI) >= 1.08 is needed by perl-DBD-MySQL-4.014-1.el5.rfx.x86_64
+        perl(DBI::Const::GetInfoType) is needed by perl-DBD-MySQL-4.014-1.el5.rfx.x86_64
+
+        
+从http://rpm.pbone.net/index.php3 网站下载相应的
+MySQL-shared-compat-5.5.24-1.rhel5.x86_64.rpm
+perl-DBI-1.620-1.el5.rfx.x86_64.rpm
+并安装：
+[root@cs-ora perl-rpm]# rpm -ivh MySQL-shared-compat-5.5.24-1.rhel5.x86_64.rpm
+Preparing...                ########################################### [100%]
+   1:MySQL-shared-compat    ########################################### [100%]
+[root@cs-ora perl-rpm]# rpm -ivh perl-DBI-1.620-1.el5.rfx.x86_64.rpm
+warning: perl-DBI-1.620-1.el5.rfx.x86_64.rpm: Header V3 DSA signature: NOKEY, key ID 6b8d79e6
+Preparing...                ########################################### [100%]
+   1:perl-DBI               ########################################### [100%]
+  
+[root@cs-ora perl-rpm]# rpm -ivh perl-DBD-MySQL-4.014-1.el5.rfx.x86_64.rpm
+warning: perl-DBD-MySQL-4.014-1.el5.rfx.x86_64.rpm: Header V3 DSA signature: NOKEY, key ID 6b8d79e6
+Preparing...                ########################################### [100%]
+   1:perl-DBD-MySQL         ########################################### [100%]
+   
+如果没有安装mysql则报如下错误：
+warning: perl-DBD-MySQL-4.014-1.el5.rfx.x86_64.rpm: Header V3 DSA signature: NOKEY, key ID 6b8d79e6
+error: Failed dependencies:
+        mysql is needed by perl-DBD-MySQL-4.014-1.el5.rfx.x86_64
+解决：
+ A：确定主机上没有安装mysql，则安装mysql server
+ B：如果已经安装mysql 并正在运营，报改错误，则只要在/root/.bash_profile中增加访问路径：
+ sed -i '/^PATH/s#$#:/usr/local/mysql/bin#' /root/.bash_profile
+           
+2）MHA node安装
+[root@cs-ora perl-rpm]# tar -xzvf mha4mysql-node-0.53.tar.gz
+mha4mysql-node-0.53/
+[root@cs-ora perl-rpm]# cd mha4mysql-node-0.53
+[root@cs-ora mha4mysql-node-0.53]# perl Makefile.PL
+*** Module::AutoInstall version 1.03
+*** Checking for Perl dependencies...
+......
+commit: wrote /usr/lib/perl5/5.8.8/CPAN/Config.pm
+[Core Features]
+- DBI        ...loaded. (1.620)
+- DBD::mysql ...loaded. (4.014)
+*** Module::AutoInstall configuration finished.
+Checking if your kit is complete...
+Looks good
+Warning: prerequisite ExtUtils::MakeMaker 6.42 not found. We have 6.30.
+Writing Makefile for mha4mysql::node
+[root@cs-ora mha4mysql-node-0.53]# make 
+cp lib/MHA/BinlogPosFinderElp.pm blib/lib/MHA/BinlogPosFinderElp.pm
+cp lib/MHA/NodeUtil.pm blib/lib/MHA/NodeUtil.pm
+cp lib/MHA/BinlogManager.pm blib/lib/MHA/BinlogManager.pm
+cp lib/MHA/SlaveUtil.pm blib/lib/MHA/SlaveUtil.pm
+cp lib/MHA/NodeConst.pm blib/lib/MHA/NodeConst.pm
+cp lib/MHA/BinlogPosFindManager.pm blib/lib/MHA/BinlogPosFindManager.pm
+cp lib/MHA/BinlogPosFinderXid.pm blib/lib/MHA/BinlogPosFinderXid.pm
+cp lib/MHA/BinlogHeaderParser.pm blib/lib/MHA/BinlogHeaderParser.pm
+cp lib/MHA/BinlogPosFinder.pm blib/lib/MHA/BinlogPosFinder.pm
+cp bin/filter_mysqlbinlog blib/script/filter_mysqlbinlog
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/filter_mysqlbinlog
+cp bin/apply_diff_relay_logs blib/script/apply_diff_relay_logs
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/apply_diff_relay_logs
+cp bin/purge_relay_logs blib/script/purge_relay_logs
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/purge_relay_logs
+cp bin/save_binary_logs blib/script/save_binary_logs
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/save_binary_logs
+Manifying blib/man1/filter_mysqlbinlog.1
+Manifying blib/man1/apply_diff_relay_logs.1
+Manifying blib/man1/purge_relay_logs.1
+Manifying blib/man1/save_binary_logs.1
+[root@cs-ora mha4mysql-node-0.53]# make install
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/BinlogPosFinderXid.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/BinlogHeaderParser.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/NodeUtil.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/NodeConst.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/BinlogPosFindManager.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/SlaveUtil.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/BinlogManager.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/BinlogPosFinder.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/BinlogPosFinderElp.pm
+Installing /usr/share/man/man1/save_binary_logs.1
+Installing /usr/share/man/man1/filter_mysqlbinlog.1
+Installing /usr/share/man/man1/apply_diff_relay_logs.1
+Installing /usr/share/man/man1/purge_relay_logs.1
+Installing /usr/bin/purge_relay_logs
+Installing /usr/bin/filter_mysqlbinlog
+Installing /usr/bin/save_binary_logs
+Installing /usr/bin/apply_diff_relay_logs
+Writing /usr/lib64/perl5/site_perl/5.8.8/x86_64-linux-thread-multi/auto/mha4mysql/node/.packlist
+Appending installation info to /usr/lib64/perl5/5.8.8/x86_64-linux-thread-multi/perllocal.pod
+三、MHA manager安装
+在Manager server上安装：192.168.133.242
+1）安装依赖包
+[root@racdb perl-rpm]# rpm -ivh perl-Config-Tiny-2.12-1.el5.rf.noarch.rpm
+warning: perl-Config-Tiny-2.12-1.el5.rf.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 6b8d79e6
+Preparing...                ########################################### [100%]
+   1:perl-Config-Tiny       ########################################### [100%]
+[root@racdb perl-rpm]# rpm -ivh perl-Log-Dispatch-2.28-1.el5.pp.noarch.rpm
+warning: perl-Log-Dispatch-2.28-1.el5.pp.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 6971f6ac
+error: Failed dependencies:
+        perl(MIME::Lite) is needed by perl-Log-Dispatch-2.28-1.el5.pp.noarch
+        perl(Mail::Send) is needed by perl-Log-Dispatch-2.28-1.el5.pp.noarch
+        perl(Mail::Sender) is needed by perl-Log-Dispatch-2.28-1.el5.pp.noarch
+        perl(Mail::Sendmail) is needed by perl-Log-Dispatch-2.28-1.el5.pp.noarch
+        perl(Params::Validate) is needed by perl-Log-Dispatch-2.28-1.el5.pp.noarch
+        perl(Sys::Syslog) >= 0.16 is needed by perl-Log-Dispatch-2.28-1.el5.pp.noarch
+        perl(Sys::Syslog) >= 0.25 is needed by perl-Log-Dispatch-2.28-1.el5.pp.noarch
+解决下载相关的rpm包或兼容包：
+[root@racdb perl-rpm]# rpm -ivh perl-Mail-Sendmail-0.79-9.el5.1.noarch.rpm
+warning: perl-Mail-Sendmail-0.79-9.el5.1.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 217521f6
+Preparing...                ########################################### [100%]
+   1:perl-Mail-Sendmail     ########################################### [100%]
+[root@racdb perl-rpm]# rpm -ivh perl-Mail-Sender-0.8.16-1.el5.rf.noarch.rpm
+warning: perl-Mail-Sender-0.8.16-1.el5.rf.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 6b8d79e6
+Preparing...                ########################################### [100%]
+   1:perl-Mail-Sender       ########################################### [100%]
+[root@racdb perl-rpm]# rpm -ivh perl-Sys-Syslog-0.29-1.el5.pp.x86_64.rpm
+warning: perl-Sys-Syslog-0.29-1.el5.pp.x86_64.rpm: Header V3 DSA signature: NOKEY, key ID 6971f6ac
+Preparing...                ########################################### [100%]
+   1:perl-Sys-Syslog        ########################################### [100%]
+[root@racdb perl-rpm]# rpm -ivh perl-Params-Validate-1.00-1.el5.pp.x86_64.rpm
+warning: perl-Params-Validate-1.00-1.el5.pp.x86_64.rpm: Header V3 DSA signature: NOKEY, key ID 6971f6ac
+Preparing...                ########################################### [100%]
+   1:perl-Params-Validate   ########################################### [100%]
+   
+[root@racdb perl-rpm]# rpm -ivh perl-Pod-Escapes-1.04-5.el5.noarch.rpm
+warning: perl-Pod-Escapes-1.04-5.el5.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 217521f6
+Preparing...                ########################################### [100%]
+   1:perl-Pod-Escapes       ########################################### [100%]
+[root@racdb perl-rpm]# rpm -ivh perl-Pod-Simple-3.19-1.el5.pp.noarch.rpm
+warning: perl-Pod-Simple-3.19-1.el5.pp.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 6971f6ac
+Preparing...                ########################################### [100%]
+   1:perl-Pod-Simple        ########################################### [100%]
+[root@racdb perl-rpm]# rpm -ivh perl-Test-Pod-1.45-1.el5.rf.noarch.rpm
+warning: perl-Test-Pod-1.45-1.el5.rf.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 6b8d79e6
+Preparing...                ########################################### [100%]
+   1:perl-Test-Pod          ########################################### [100%]
+       
+[root@racdb perl-rpm]# rpm -ivh perl-TimeDate-1.20-1.el5.rfx.noarch.rpm
+warning: perl-TimeDate-1.20-1.el5.rfx.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 6b8d79e6
+Preparing...                ########################################### [100%]
+   1:perl-TimeDate          ########################################### [100%]
+[root@racdb perl-rpm]# rpm -ivh perl-Email-Date-Format-1.002-4.el5.noarch.rpm
+warning: perl-Email-Date-Format-1.002-4.el5.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 217521f6
+Preparing...                ########################################### [100%]
+   1:perl-Email-Date-Format ########################################### [100%]
+[root@racdb perl-rpm]# rpm -ivh perl-Parallel-ForkManager-0.7.5-4.el5.noarch.rpm
+warning: perl-Parallel-ForkManager-0.7.5-4.el5.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 217521f6
+Preparing...                ########################################### [100%]
+   1:perl-Parallel-ForkManag########################################### [100%]
+[root@racdb perl-rpm]# rpm -ivh perl-MIME-Lite-3.028-1.el5.rf.noarch.rpm
+warning: perl-MIME-Lite-3.028-1.el5.rf.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 6b8d79e6
+Preparing...                ########################################### [100%]
+   1:perl-MIME-Lite         ########################################### [100%]
+[root@racdb perl-rpm]# rpm -ivh perl-MailTools-2.09-1.el5.rf.noarch.rpm
+warning: perl-MailTools-2.09-1.el5.rf.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 6b8d79e6
+Preparing...                ########################################### [100%]
+   1:perl-MailTools         ########################################### [100%]
+   
+[root@racdb perl-rpm]# rpm -ivh perl-Log-Dispatch-2.28-1.el5.pp.noarch.rpm
+warning: perl-Log-Dispatch-2.28-1.el5.pp.noarch.rpm: Header V3 DSA signature: NOKEY, key ID 6971f6ac
+Preparing...                ########################################### [100%]
+   1:perl-Log-Dispatch      ########################################### [100%]
+perl-Config-IniFiles
+2）安装MHA manager
+[root@racdb perl-rpm]# tar -xzvf mha4mysql-manager-0.53.tar.gz
+[root@racdb perl-rpm]# cd mha4mysql-manager-0.53
+[root@racdb mha4mysql-manager-0.53]# perl Makefile.PL
+*** Module::AutoInstall version 1.03
+*** Checking for Perl dependencies...
+[Core Features]
+- DBI                   ...loaded. (1.620)
+- DBD::mysql            ...loaded. (4.014)
+- Time::HiRes           ...loaded. (1.9717)
+- Config::Tiny          ...loaded. (2.12)
+- Log::Dispatch         ...loaded. (2.28)
+- Parallel::ForkManager ...loaded. (0.7.5)
+- MHA::NodeConst        ...loaded. (0.53)
+*** Module::AutoInstall configuration finished.
+Checking if your kit is complete...
+Looks good
+Warning: prerequisite ExtUtils::MakeMaker 6.42 not found. We have 6.30.
+Writing Makefile for mha4mysql::manager
+[root@racdb mha4mysql-manager-0.53]# make
+cp lib/MHA/ManagerUtil.pm blib/lib/MHA/ManagerUtil.pm
+cp lib/MHA/Config.pm blib/lib/MHA/Config.pm
+cp lib/MHA/HealthCheck.pm blib/lib/MHA/HealthCheck.pm
+cp lib/MHA/ManagerConst.pm blib/lib/MHA/ManagerConst.pm
+cp lib/MHA/ServerManager.pm blib/lib/MHA/ServerManager.pm
+cp lib/MHA/FileStatus.pm blib/lib/MHA/FileStatus.pm
+cp lib/MHA/ManagerAdmin.pm blib/lib/MHA/ManagerAdmin.pm
+cp lib/MHA/ManagerAdminWrapper.pm blib/lib/MHA/ManagerAdminWrapper.pm
+cp lib/MHA/MasterFailover.pm blib/lib/MHA/MasterFailover.pm
+cp lib/MHA/MasterRotate.pm blib/lib/MHA/MasterRotate.pm
+cp lib/MHA/MasterMonitor.pm blib/lib/MHA/MasterMonitor.pm
+cp lib/MHA/Server.pm blib/lib/MHA/Server.pm
+cp lib/MHA/SSHCheck.pm blib/lib/MHA/SSHCheck.pm
+cp lib/MHA/DBHelper.pm blib/lib/MHA/DBHelper.pm
+cp bin/masterha_stop blib/script/masterha_stop
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/masterha_stop
+cp bin/masterha_conf_host blib/script/masterha_conf_host
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/masterha_conf_host
+cp bin/masterha_check_repl blib/script/masterha_check_repl
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/masterha_check_repl
+cp bin/masterha_check_status blib/script/masterha_check_status
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/masterha_check_status
+cp bin/masterha_master_monitor blib/script/masterha_master_monitor
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/masterha_master_monitor
+cp bin/masterha_check_ssh blib/script/masterha_check_ssh
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/masterha_check_ssh
+cp bin/masterha_master_switch blib/script/masterha_master_switch
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/masterha_master_switch
+cp bin/masterha_secondary_check blib/script/masterha_secondary_check
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/masterha_secondary_check
+cp bin/masterha_manager blib/script/masterha_manager
+/usr/bin/perl "-Iinc" "-MExtUtils::MY" -e "MY->fixin(shift)" blib/script/masterha_manager
+Manifying blib/man1/masterha_stop.1
+Manifying blib/man1/masterha_conf_host.1
+Manifying blib/man1/masterha_check_repl.1
+Manifying blib/man1/masterha_check_status.1
+Manifying blib/man1/masterha_master_monitor.1
+Manifying blib/man1/masterha_check_ssh.1
+Manifying blib/man1/masterha_master_switch.1
+Manifying blib/man1/masterha_secondary_check.1
+Manifying blib/man1/masterha_manager.1
+[root@racdb mha4mysql-manager-0.53]# make install
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/Config.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/FileStatus.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/HealthCheck.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/ManagerAdmin.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/SSHCheck.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/MasterFailover.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/Server.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/ManagerConst.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/ServerManager.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/DBHelper.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/ManagerAdminWrapper.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/MasterRotate.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/ManagerUtil.pm
+Installing /usr/lib/perl5/site_perl/5.8.8/MHA/MasterMonitor.pm
+Installing /usr/share/man/man1/masterha_secondary_check.1
+Installing /usr/share/man/man1/masterha_manager.1
+Installing /usr/share/man/man1/masterha_master_switch.1
+Installing /usr/share/man/man1/masterha_check_repl.1
+Installing /usr/share/man/man1/masterha_stop.1
+Installing /usr/share/man/man1/masterha_check_status.1
+Installing /usr/share/man/man1/masterha_conf_host.1
+Installing /usr/share/man/man1/masterha_check_ssh.1
+Installing /usr/share/man/man1/masterha_master_monitor.1
+Installing /usr/bin/masterha_check_ssh
+Installing /usr/bin/masterha_manager
+Installing /usr/bin/masterha_check_repl
+Installing /usr/bin/masterha_master_switch
+Installing /usr/bin/masterha_secondary_check
+Installing /usr/bin/masterha_check_status
+Installing /usr/bin/masterha_stop
+Installing /usr/bin/masterha_conf_host
+Installing /usr/bin/masterha_master_monitor
+Writing /usr/lib64/perl5/site_perl/5.8.8/x86_64-linux-thread-multi/auto/mha4mysql/manager/.packlist
+Appending installation info to /usr/lib64/perl5/5.8.8/x86_64-linux-thread-multi/perllocal.pod
+四、MHA 配置
+1）、几个概念：
+Application：是指master-slave对，一个manager可以管理多个Applications
+appxx.cnf和默认masterha_default.cnf：全局范围参数配置和应用参数配置，全局参数配置是对该MHA manager管理下的所有Applications生效，并从默认的全局
+  配置文件/etc/masterha_default.cnf读取；Application范围参数配置只对一个Applicattion生效，配置文件需要独立创建，如/etc/app1.cnf。manager管理
+  的多个application可以分别设置，如:/etc/app2.cnf /etc/app3.cnf等；
+  Application范围的参数配置，必须包含在[server default]定义块中，而Node本地的配置必须包含在[server 1...N]块中。多个Application的相关名称必须唯一；
+  如果同时配置了全局范围参数和Application范围参数，最终以Application范围参数生效，因此参数分Local/App/Global 三种范围。
+2）、配置MHA cnf
+manager_host$ cat /etc/app1.cnf
+[server default]   
+# mysql user and password   
+user=root
+password=12345678
+ssh_user=root
+# working directory on the manager
+manager_workdir=/var/log/masterha/app1 #不存在Node会自动创建
+manager_log=/var/log/masterha/app1/app1.log
+# working directory on MySQL servers   
+remote_workdir=/var/log/masterha/app1
+master_binlog_dir=/var/lib/mysql/
+check_repl_delay=0
+[server1]
+hostname=192.168.133.109
+candidate_master=1     
+[server2]
+hostname=192.168.133.108  
+candidate_master=1     
+[server3]
+hostname=192.168.133.241
+no_master=1
+
+3）检查和配置SSH无密码验证设置
+在manager上192.168.133.242配置到个Node的无密码验证：
+[root@racdb ~]# ssh-keygen -t rsa
+[root@racdb ~]# ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.133.108
+[root@racdb ~]# ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.133.109
+[root@racdb ~]# ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.133.241
+在Node：192.168.133.108上：
+[root@racdb ~]# ssh-keygen -t rsa
+[root@racdb ~]# ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.133.109
+[root@racdb ~]# ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.133.241
+在Node：192.168.133.109上:
+[root@racdb ~]# ssh-keygen -t rsa
+[root@racdb ~]# ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.133.108
+[root@racdb ~]# ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.133.241
+在Node：192.168.133.241上：
+[root@racdb ~]# ssh-keygen -t rsa
+[root@racdb ~]# ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.133.108
+[root@racdb ~]# ssh-copy-id -i /root/.ssh/id_rsa.pub root@192.168.133.109
+检查SSH：
+[root@racdb mha4mysql-manager-0.53]# masterha_check_ssh --conf=/etc/app1.cnf
+Thu May 17 15:15:24 2012 - [warning] Global configuration file /etc/masterha_default.cnf not found. Skipping.
+Thu May 17 15:15:24 2012 - [info] Reading application default configurations from /etc/app1.cnf..
+Thu May 17 15:15:24 2012 - [info] Reading server configurations from /etc/app1.cnf..
+Thu May 17 15:15:24 2012 - [info] Starting SSH connection tests..
+Thu May 17 15:15:25 2012 - [debug]
+Thu May 17 15:15:24 2012 - [debug]  Connecting via SSH from root@192.168.133.109(192.168.133.109:22) to root@192.168.133.108(192.168.133.108:22)..
+Thu May 17 15:15:25 2012 - [debug]   ok.
+Thu May 17 15:15:25 2012 - [debug]  Connecting via SSH from root@192.168.133.109(192.168.133.109:22) to root@192.168.133.241(192.168.133.241:22)..
+Thu May 17 15:15:25 2012 - [debug]   ok.
+Thu May 17 15:15:25 2012 - [debug]
+Thu May 17 15:15:25 2012 - [debug]  Connecting via SSH from root@192.168.133.108(192.168.133.108:22) to root@192.168.133.109(192.168.133.109:22)..
+Thu May 17 15:15:25 2012 - [debug]   ok.
+Thu May 17 15:15:25 2012 - [debug]  Connecting via SSH from root@192.168.133.108(192.168.133.108:22) to root@192.168.133.241(192.168.133.241:22)..
+Thu May 17 15:15:25 2012 - [debug]   ok.
+Thu May 17 15:15:26 2012 - [debug]
+Thu May 17 15:15:25 2012 - [debug]  Connecting via SSH from root@192.168.133.241(192.168.133.241:22) to root@192.168.133.109(192.168.133.109:22)..
+Thu May 17 15:15:26 2012 - [debug]   ok.
+Thu May 17 15:15:26 2012 - [debug]  Connecting via SSH from root@192.168.133.241(192.168.133.241:22) to root@192.168.133.108(192.168.133.108:22)..
+Thu May 17 15:15:26 2012 - [debug]   ok.
+Thu May 17 15:15:26 2012 - [info] All SSH connection tests passed successfully.
+4）检查复制状态
+[root@racdb mha4mysql-manager-0.53]# masterha_check_repl --conf=/etc/app1.cnf
+如果报错，则做相应的授权处理：
+Thu May 17 15:17:06 2012 - [warning] Global configuration file /etc/masterha_default.cnf not found. Skipping.
+Thu May 17 15:17:06 2012 - [info] Reading application default configurations from /etc/app1.cnf..
+Thu May 17 15:17:06 2012 - [info] Reading server configurations from /etc/app1.cnf..
+Thu May 17 15:17:06 2012 - [info] MHA::MasterMonitor version 0.53.
+Creating directory /var/log/masterha/app1 #...Node....... done.
+Thu May 17 15:17:06 2012 - [error][/usr/lib/perl5/site_perl/5.8.8/MHA/ServerManager.pm, ln255] Got MySQL error when connecting 192.168.133.109(192.168.133.109:3306) :1130:Host '192.168.133.242' is not allowed to connect to this MySQL server, but this is not mysql crash. Check MySQL server settings.
+在192.168.133.109/108上：
+mysql> grant all privileges on *.* to root@192.168.133.242 identified by '12345678';
+Query OK, 0 rows affected (0.01 sec)
+后继续检查：
+[root@racdb mha4mysql-manager-0.53]# masterha_check_repl --conf=/etc/app1.cnf
+Thu May 17 15:29:29 2012 - [warning] Global configuration file /etc/masterha_default.cnf not found. Skipping.
+Thu May 17 15:29:29 2012 - [info] Reading application default configurations from /etc/app1.cnf..
+Thu May 17 15:29:29 2012 - [info] Reading server configurations from /etc/app1.cnf..
+Thu May 17 15:29:29 2012 - [info] MHA::MasterMonitor version 0.53.
+Thu May 17 15:29:29 2012 - [error][/usr/lib/perl5/site_perl/5.8.8/MHA/ServerManager.pm, ln732] Multi-master configuration is detected, but two or more masters are either writable (read-only is not set) or dead! Check configurations for details. Master configurations are as below:
+Master 192.168.133.109(192.168.133.109:3306), replicating from 192.168.133.108(192.168.133.108:3306)
+Master 192.168.133.108(192.168.133.108:3306), replicating from 192.168.133.109(192.168.133.109:3306)
+注：根据检查的错误提示，进行相应的修改设置。
+1、告警：
+当前是主主互备构架，设置一个candicate主机108以及其他从机均为read_only。
+mysql> set global read_only=1;
+Query OK, 0 rows affected (0.03 sec)
+mysql> show variables like 'read_only';
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| read_only     | ON    |
++---------------+-------+
+1 row in set (0.00 sec)
+设置主机和其他从机位relay_log_purge：
+mysql> set global relay_log_purge=0;
+Query OK, 0 rows affected (0.00 sec)
+mysql> show variables like 'relay_log_purge';
++-----------------+-------+
+| Variable_name   | Value |
++-----------------+-------+
+| relay_log_purge | OFF   |
++-----------------+-------+
+1 row in set (0.00 sec)
+设置relay_log_purge=0 后必须对relay log文件进行有效的管理：
+vi /etc/cron.d/purge_relay_logs 
+# purge relay logs at 5am  
+0 5 * * * app /usr/bin/purge_relay_logs --user=root --password=12345678 --disable_relay_log_purge >> /var/log/masterha/purge_relay_logs.log 2>&1
+/etc/init.d/crond restart
+自此，MHA配置完毕
+五、运营管理和测试
+1）启动MHA manager：
+[root@racdb mha4mysql-manager-0.53]# masterha_manager --conf=/etc/app1.cnf --remove_dead_master_conf
+推荐使用后台进程模式运营：
+[root@racdb mha4mysql-manager-0.53]# nohup masterha_manager --conf=/etc/app1.cnf --remove_dead_master_conf < /dev/null > /var/log/masterha/app1/app1.log 2>&1 &
+2）检查manager运营状态：
+[root@racdb scripts]# masterha_check_status --conf=/etc/app1.cnf
+app1 (pid:26447) is running(0:PING_OK), master:192.168.133.109
+[root@racdb scripts]# masterha_check_repl --conf=/etc/app1.cnf
+3）手工切换测试
+方式一：手工对dead master进行切换
+[root@racdb scripts]# masterha_master_switch --master_state=dead --conf=/etc/app1.cnf --dead_master_host=192.168.133.109 --new_master_host=192.168.133.108
+如果，MHA manager检测到没有dead的server，将报错，并结束failover：
+Thu May 17 17:53:33 2012 - [info] Dead Servers:
+Thu May 17 17:53:33 2012 - [error][/usr/lib/perl5/site_perl/5.8.8/MHA/MasterFailover.pm, ln181] None of server is dead. Stop failover.
+方式二：当前master在正常运行情况的切换：
+masterha_master_switch --conf=/etc/app1.cnf --master_state=alive --new_master_host=192.168.133.108
+Thu May 17 18:01:33 2012 - [info] Checking MHA is not monitoring or doing failover..
+Thu May 17 18:01:33 2012 - [error][/usr/lib/perl5/site_perl/5.8.8/MHA/MasterRotate.pm, ln142] Getting advisory lock failed on the current master. 
+MHA Monitor runs on the current master. Stop MHA Manager/Monitor and try again.
+[root@racdb app1]# vi /etc/app1.cnf
+修改App1.cnf如下：
+[server1]
+hostname=192.168.133.109     
+[server2]
+hostname=192.168.133.108  
+candidate_master=1     
+[server3]
+hostname=192.168.133.241
+[root@racdb app1]# masterha_stop --conf=/etc/app1.cnf
+[root@racdb app1]# masterha_master_switch --conf=/etc/app1.cnf --master_state=alive --new_master_host=192.168.133.108
+执行成功。
+masterha_master_switch --master_state=dead --conf=/etc/app1.cnf --dead_master_host=192.168.133.108 --new_master_host=192.168.133.109
+4）停止manager，不停止mysql server
+[root@racdb scripts]# masterha_stop --conf=/etc/app1.cnf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+技术实战：基于 MHA 方式实现 MySQL 的高可用(1)
+
